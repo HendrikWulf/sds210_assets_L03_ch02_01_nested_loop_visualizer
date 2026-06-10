@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nested Loop Visualizer</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8fafc;
+            color: #0f172a;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        h3 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        .main-layout {
+            display: flex;
+            gap: 20px;
+        }
+        .code-section {
+            flex: 1;
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .code-line {
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 2px 0;
+            transition: background 0.2s;
+        }
+        .keyword { color: #c678dd; }
+        .variable { color: #e5c07b; }
+        .number { color: #d19a66; }
+        
+        .grid-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 20px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid #cbd5e1;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: monospace;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+        .cell.active {
+            background: #3b82f6;
+            border-color: #2563eb;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+        }
+        .cell.visited {
+            background: #dbeafe;
+            border-color: #93c5fd;
+            color: #1e40af;
+        }
+        .explanation {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 15px;
+            border-radius: 4px;
+            color: #0369a1;
+            font-size: 0.95rem;
+            text-align: center;
+            line-height: 1.5;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 1rem;
+        }
+        .btn-step { background-color: #10b981; color: white; }
+        .btn-step:hover { background-color: #059669; }
+        .btn-step:disabled { background-color: #94a3b8; cursor: not-allowed; }
+        .btn-reset { background-color: #e2e8f0; color: #475569; }
+        .btn-reset:hover { background-color: #cbd5e1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h3>Nested Loop Visualizer</h3>
+    
+    <div class="main-layout">
+        <div class="code-section">
+            <div class="code-line"><span class="keyword">for</span> <span class="variable">y</span> <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>]:</div>
+            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">for</span> <span class="variable">x</span> <span class="keyword">in</span> [<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>]:</div>
+            <div class="code-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;print(<span class="variable">x</span>, <span class="variable">y</span>)</div>
+        </div>
+
+        <div class="grid-section">
+            <div class="grid" id="grid">
+                </div>
+        </div>
+    </div>
+
+    <div class="explanation" id="explanation">
+        Click "Step Forward" to start executing the nested loops.
+    </div>
+
+    <div class="controls">
+        <button class="btn-step" id="stepBtn" onclick="stepForward()">Step Forward</button>
+        <button class="btn-reset" onclick="resetVisualizer()">Reset</button>
+    </div>
+</div>
+
+<script>
+    const ROWS = 3; // y goes 0, 1, 2
+    const COLS = 4; // x goes 0, 1, 2, 3
+    let currentStep = -1;
+    const totalSteps = ROWS * COLS;
+
+    function initGrid() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        for (let y = 0; y < ROWS; y++) {
+            for (let x = 0; x < COLS; x++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.id = `cell-${x}-${y}`;
+                cell.textContent = `${x},${y}`;
+                grid.appendChild(cell);
+            }
+        }
+    }
+
+    function stepForward() {
+        if (currentStep >= totalSteps - 1) return;
+        
+        // Mark previous cell as visited
+        if (currentStep >= 0) {
+            const prevY = Math.floor(currentStep / COLS);
+            const prevX = currentStep % COLS;
+            const prevCell = document.getElementById(`cell-${prevX}-${prevY}`);
+            prevCell.classList.remove('active');
+            prevCell.classList.add('visited');
+        }
+
+        currentStep++;
+
+        // Highlight new cell
+        const y = Math.floor(currentStep / COLS);
+        const x = currentStep % COLS;
+        const currentCell = document.getElementById(`cell-${x}-${y}`);
+        currentCell.classList.add('active');
+
+        // Update explanation
+        const explanation = document.getElementById('explanation');
+        if (x === 0) {
+            explanation.innerHTML = `Outer loop drops down to <span style="color:#e5c07b; font-weight:bold; background:#1e293b; padding:2px 6px; border-radius:4px; font-family:monospace;">y = ${y}</span>. Inner loop resets and starts at <span style="color:#e5c07b; font-weight:bold; background:#1e293b; padding:2px 6px; border-radius:4px; font-family:monospace;">x = ${x}</span>.`;
+        } else {
+            explanation.innerHTML = `Outer loop holds steady at <span style="color:#e5c07b; font-weight:bold; background:#1e293b; padding:2px 6px; border-radius:4px; font-family:monospace;">y = ${y}</span>. Inner loop moves across to <span style="color:#e5c07b; font-weight:bold; background:#1e293b; padding:2px 6px; border-radius:4px; font-family:monospace;">x = ${x}</span>.`;
+        }
+
+        if (currentStep === totalSteps - 1) {
+            document.getElementById('stepBtn').disabled = true;
+            explanation.innerHTML += "<br><br><b>Loops complete! All combinations have been processed.</b>";
+        }
+    }
+
+    function resetVisualizer() {
+        currentStep = -1;
+        initGrid();
+        document.getElementById('stepBtn').disabled = false;
+        document.getElementById('explanation').innerHTML = 'Click "Step Forward" to start executing the nested loops.';
+    }
+
+    // Initialize on load
+    initGrid();
+</script>
+
+</body>
+</html>
